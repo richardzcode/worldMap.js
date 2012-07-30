@@ -1,0 +1,28 @@
+<html>
+<head>
+<title>Map Demo</title>
+</head>
+<style type="text/css">
+canvas {
+  border: 1px solid #DDD;
+  margin: 5px;
+}
+</style>
+<body>
+<canvas id="demo1" width="400px" height="200px"></canvas>
+<canvas id="demo2" width="400px" height="200px"></canvas>
+<script type="text/javascript" src="worldMap.js"></script>
+<script>
+var map = new Map();
+map.draw(document.getElementById('demo1'));
+
+map.draw(document.getElementById('demo2')
+  , { mapArea: { x: 50, y: 25, width: 300, height: 150 }
+    , style: { background: { stroke: 'grey', fill: '#A5BFDD' }
+             , land: { stroke: 'grey' , fill: '#F4F3F0'}
+             }
+    }
+);
+</script>
+</body>
+</html>
