@@ -18,3 +18,6 @@ So, here is the magic formula:
 
 Then get lands shapfile from [Natural Earth](http://www.naturalearthdata.com/). Extract out lat/lon by using [shpdump](http://shapelib.maptools.org/shapelib-tools.html#shpdump). We got a map.
 
+##Screenshot
+
+![demo](https://github.com/richardzcode/worldMap.js/blob/master/worldMapDemo.png)
