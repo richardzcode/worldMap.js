@@ -20,4 +20,4 @@ Then get lands shapfile from [Natural Earth](http://www.naturalearthdata.com/). 
 
 ##Screenshot
 
-![demo](https://github.com/richardzcode/worldMap.js/blob/master/worldMapDemo.png)
+![demo](https://github.com/richardzcode/worldMap.js/blob/master/worldMapDemo.png?raw=true)
