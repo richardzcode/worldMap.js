@@ -1,3 +1,4 @@
+
 var Map = function() {
   var lands = [];
 
@@ -5696,6 +5697,110 @@ var Map = function() {
     context.fill();
   };
 
+
+
+  this.dayOfYear = function(day) {
+    var dayOne = new Date(day.getFullYear(), 0, 1);
+    return Math.ceil((day.getTime() - dayOne.getTime()) / (24 * 60 * 60 * 1000));
+  };
+
+  this.hourOfDay = function(day) {
+    return day.getUTCHours() + (day.getUTCMinutes() * 60 + day.getUTCSeconds()) / (60 * 60);
+  };
+
+  this.nightLength = function(doy, lat) {
+    // Ref: http://mathforum.org/library/drmath/view/56478.html
+
+    var P1 = .961396 * Math.tan(.00860 * (doy - 186))
+      , P = Math.asin(.39795 * Math.cos(.2163108 + 2 * Math.atan(P1)))
+      , D1 = Math.sin(0.833 * Math.PI / 180) + Math.sin(lat * Math.PI / 180) * Math.sin(P)
+      , D2 = Math.cos(lat * Math.PI / 180) * Math.cos(P)
+      , D = 24 - (24 / Math.PI) * Math.acos(D1 / D2)
+      , N = (24 / Math.PI) * Math.acos(D1 / D2);
+
+    return Math.acos(D1 / D2) / Math.PI;
+  };
+
+  this.drawNightLine = function(context, x1, x2, y, w100p) {
+    var maxOpacity = 0.3;
+
+    if (w100p || x2 - x1 <= 24) {
+      this.line(context, x1, x2, y, 'rgba(0, 0, 0, ' + maxOpacity + ')');
+    } else if (x2 - x1 > 20) {
+      var glen = Math.min(20, Math.floor((x2 - x1) / 10));
+      this.drawGradientLine(context, x1, x2, y, glen, maxOpacity);
+    }
+  };
+
+  this.drawGradientLine = function(context, x1, x2, y, glen, opacity) {
+    var grad = context.createLinearGradient(x1, y, x1 + glen, y);
+    grad.addColorStop(0, 'rgba(0, 0, 0, 0)');
+    grad.addColorStop(1, 'rgba(0, 0, 0, ' + opacity + ')');
+    this.line(context, x1, x1 + glen, y, grad);
+
+    this.line(context, x1 + glen, x2 - glen, y, 'rgba(0, 0, 0, ' + opacity + ')');
+
+    grad = context.createLinearGradient(x2 - glen, y, x2, y);
+    grad.addColorStop(0, 'rgba(0, 0, 0, ' + opacity + ')');
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    this.line(context, x2 - glen, x2, y, grad);
+  };
+
+  this.line = function(context, x1, x2, y, style) {
+    context.strokeStyle = style;
+    context.beginPath();
+    context.moveTo(x1, y);
+    context.lineTo(x2, y);
+    context.closePath();
+    context.stroke();
+  };
+
+  this.drawDayNight = function(context, mapArea) {
+    var canvas = context.canvas
+      , w = mapArea.width
+      , today = new Date()
+      , doy = this.dayOfYear(today)
+      , hod = this.hourOfDay(today)
+      , offset1 = - Math.floor(hod * w / 24) + mapArea.x
+      , offset2 = w + offset1;
+
+    context.save();
+    context.beginPath();
+    context.rect(mapArea.x, mapArea.y, mapArea.width, mapArea.height);
+    context.clip();
+
+    context.globalCompositeOperation = 'darker';
+
+    this.drawNight(context, doy, offset1, mapArea);
+    this.drawNight(context, doy, offset2, mapArea);
+
+    context.restore();
+  };
+
+  this.drawNight = function(context, doy, offset, mapArea) {
+    var canvas = context.canvas
+      , w = mapArea.width
+      , h = mapArea.height
+      , halfW = w / 2
+      , halfH = h / 2;
+
+    for (var i = 0; i < mapArea.height; i ++) {
+      var lat = 90 - (i * 180 / mapArea.height)
+        , nl = this.nightLength(doy, lat);
+
+      if (isNaN(nl)) {
+        if ((doy < 79 || doy > 268) && i < halfH) {
+          this.drawNightLine(context, offset, halfW * 2 + offset, i + mapArea.y, true);
+        } else if ((doy > 80 && doy < 267) && i > halfH) {
+          this.drawNightLine(context, offset, halfW * 2 + offset, i + mapArea.y, true);
+        }
+      } else {
+        var half = nl * w / 2;
+        this.drawNightLine(context, (halfW - half) + offset, (halfW + half) + offset, i + mapArea.y);
+      }
+    }
+  };
+
   /**
   * options: { mapArea: { x: _, y: _, width: _, height: _ }
   *          , style: { background: { stroke: 'stroke style', fill: 'fill style' }
@@ -5720,6 +5825,8 @@ var Map = function() {
       var land = lands[i];
       if (land.length) { this.drawLand(context, land, landStyle, mapArea); }
     }
+
+    this.drawDayNight(context, mapArea);
 
     if (callback) { callback(); }
   };
